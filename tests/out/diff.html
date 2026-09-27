@@ -1,0 +1,463 @@
+﻿<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MSI diff: DemoApp-1.0.msi &rarr; DemoApp-1.1.msi</title>
+<style>
+:root{
+  --bg:#f6f7f9; --fg:#1f2328; --muted:#636c76; --card:#ffffff; --line:#d8dee4;
+  --add:#1a7f37; --add-bg:#e8f5ec; --del:#cf222e; --del-bg:#ffeceb; --chg:#9a6700; --chg-bg:#fff6d9;
+  --accent:#0969da;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#0d1117; --fg:#e6edf3; --muted:#9198a1; --card:#161b22; --line:#30363d;
+    --add:#3fb950; --add-bg:#12261a; --del:#f85149; --del-bg:#2d1213; --chg:#d29922; --chg-bg:#2b2311;
+    --accent:#4493f8; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code,.mono{font-family:ui-monospace,"Cascadia Mono",Consolas,"Liberation Mono",monospace;font-size:12.5px}
+.hero{padding:28px 32px 20px;background:var(--card);border-bottom:1px solid var(--line)}
+.hero h1{margin:0 0 12px;font-size:22px;font-weight:600}
+.verdict{display:inline-block;padding:6px 14px;border-radius:999px;font-weight:600;font-size:13px;margin-bottom:18px}
+.v-chg{background:var(--chg-bg);color:var(--chg);border:1px solid var(--chg)}
+.v-same{background:var(--add-bg);color:var(--add);border:1px solid var(--add)}
+.pkgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px}
+.pkg{border:1px solid var(--line);border-radius:8px;padding:14px 16px;background:var(--bg)}
+.pkg-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pkg-name{font-size:16px;font-weight:600;margin:2px 0 10px;word-break:break-all}
+.pkg dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0;font-size:12.5px}
+.pkg dt{color:var(--muted)}
+.pkg dd{margin:0;word-break:break-all}
+.stamp{color:var(--muted);font-size:12px;margin:14px 0 0}
+.toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 32px;background:var(--card);border-bottom:1px solid var(--line)}
+.toolbar input[type=search]{flex:0 1 320px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;
+  background:var(--bg);color:var(--fg)}
+.toolbar button{padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);
+  color:var(--fg);cursor:pointer}
+.toolbar button:hover{border-color:var(--accent);color:var(--accent)}
+.toolbar label{font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
+.toolbar .spacer{flex:1}
+main{padding:24px 32px 64px;max-width:1800px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.stat-v{font-size:24px;font-weight:600;line-height:1.1}
+.stat-l{font-size:12px;color:var(--muted);margin-top:4px}
+.s-add .stat-v{color:var(--add)} .s-del .stat-v{color:var(--del)} .s-chg .stat-v{color:var(--chg)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-bottom:20px}
+.card>h2{margin:0 0 4px;font-size:17px;font-weight:600;display:flex;align-items:baseline;gap:10px}
+.count{font-size:12px;font-weight:400;color:var(--muted)}
+.sub{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+.warn{color:var(--chg);font-size:12.5px;margin:6px 0}
+.empty{color:var(--muted);font-size:13px;margin:6px 0}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table.grid{border-collapse:collapse;width:100%;font-size:12.5px}
+table.grid th{position:sticky;top:0;background:var(--card);text-align:left;font-weight:600;
+  padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
+table.grid th.pk::after{content:" \01F511";font-size:10px}
+table.grid td{padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top;
+  max-width:560px;overflow-wrap:break-word;word-break:break-word}
+table.grid tbody tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.k{font-weight:600;white-space:nowrap}
+.col-st{width:1%;white-space:nowrap}
+.r-add{background:var(--add-bg)} .r-del{background:var(--del-bg)} .r-chg{background:var(--chg-bg)}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-add{background:var(--add-bg);color:var(--add);border:1px solid var(--add)}
+.b-del{background:var(--del-bg);color:var(--del);border:1px solid var(--del)}
+.b-chg{background:var(--chg-bg);color:var(--chg);border:1px solid var(--chg)}
+.b-same{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.c-chg .v-old{color:var(--del);text-decoration:line-through;opacity:.85}
+.c-chg .v-arrow{color:var(--muted);margin:0 6px}
+.c-chg .v-new{color:var(--add);font-weight:600}
+details.tbl{border:1px solid var(--line);border-radius:8px;margin:10px 0;background:var(--card)}
+details.tbl>summary{cursor:pointer;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  list-style:none;user-select:none}
+details.tbl>summary::-webkit-details-marker{display:none}
+details.tbl>summary::before{content:"\25B8";color:var(--muted);transition:transform .12s}
+details.tbl[open]>summary::before{transform:rotate(90deg)}
+details.tbl>summary:hover{background:var(--bg)}
+details.tbl .tname{font-weight:600;font-size:14px}
+details.tbl .tmeta{color:var(--muted);font-size:12px;margin-left:auto}
+details.tbl>*:not(summary){margin-left:14px;margin-right:14px}
+details.tbl>.tablewrap{margin-bottom:14px}
+.pill{font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:5px;font-variant-numeric:tabular-nums}
+.p-add{background:var(--add-bg);color:var(--add)}
+.p-del{background:var(--del-bg);color:var(--del)}
+.p-chg{background:var(--chg-bg);color:var(--chg)}
+.hidden{display:none !important}
+</style></head><body>
+<header class="hero">
+<h1>MSI package comparison</h1>
+<div class="verdict v-chg">Packages differ</div>
+<div class="pkgs">
+<div class="pkg">
+<div class="pkg-label">Reference (left)</div>
+<div class="pkg-name">DemoApp-1.0.msi</div>
+<dl><dt>Path</dt><dd>E:\Cursor\msi-diff\tests\out\DemoApp-1.0.msi</dd>
+<dt>Size</dt><dd>20,480 bytes</dd>
+<dt>Modified</dt><dd>2026-09-25 23:15:04</dd>
+<dt>SHA-256</dt><dd class="mono">95df222a0de2562a0f7ce5df2bdb7c190c68e8aecbeb69e925b2fe8715c06519</dd></dl>
+</div>
+<div class="pkg">
+<div class="pkg-label">Difference (right)</div>
+<div class="pkg-name">DemoApp-1.1.msi</div>
+<dl><dt>Path</dt><dd>E:\Cursor\msi-diff\tests\out\DemoApp-1.1.msi</dd>
+<dt>Size</dt><dd>20,480 bytes</dd>
+<dt>Modified</dt><dd>2026-09-25 23:15:05</dd>
+<dt>SHA-256</dt><dd class="mono">e1fbf93d07bace057015f769b9c70dca53298f136133e9799b72a5c58be49693</dd></dl>
+</div>
+</div>
+<p class="stamp">Report generated 2026-09-25 23:15:19</p>
+</header>
+<div class="toolbar">
+<input type="search" id="q" placeholder="Filter report rows...">
+<label><input type="checkbox" id="onlyDiff" checked> differences only</label>
+<button type="button" data-act="expand">Expand all</button>
+<button type="button" data-act="collapse">Collapse all</button>
+<span class="spacer"></span>
+<a href="#summary">Summary</a><a href="#properties">Property</a><a href="#files">Files</a><a href="#tables">Tables</a>
+</div>
+<main>
+<section class="cards">
+<div class="stat s-chg"><div class="stat-v">9</div><div class="stat-l">Tables changed</div></div>
+<div class="stat s-add"><div class="stat-v">1</div><div class="stat-l">Tables added</div></div>
+<div class="stat s-del"><div class="stat-v">0</div><div class="stat-l">Tables removed</div></div>
+<div class="stat s-add"><div class="stat-v">8</div><div class="stat-l">Rows added</div></div>
+<div class="stat s-del"><div class="stat-v">5</div><div class="stat-l">Rows removed</div></div>
+<div class="stat s-chg"><div class="stat-v">7</div><div class="stat-l">Rows changed</div></div>
+<div class="stat s-chg"><div class="stat-v">1/1/1</div><div class="stat-l">Files +/-/~</div></div>
+<div class="stat s-chg"><div class="stat-v">1/1/3</div><div class="stat-l">Properties +/-/~</div></div>
+</section>
+<section class="card" id="summary">
+<h2>Summary Information Stream <span class="count">4 of 21</span></h2>
+<p class="sub">Package metadata: package code, platform, languages, schema version</p>
+<div class="tablewrap"><table class="grid">
+<thead><tr><th class="col-st">Status</th><th>Name</th><th>DemoApp-1.0.msi</th><th>DemoApp-1.1.msi</th></tr></thead><tbody>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">Codepage</td><td>1252</td><td>1252</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">Title</td><td>Installation Database</td><td>Installation Database</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">Subject</td><td>Demo App</td><td>Demo App</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">Author</td><td>Contoso Ltd</td><td>Contoso Ltd</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">Keywords</td><td>Installer,MSI,Database</td><td>Installer,MSI,Database</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td class="k">Comments</td><td>Test package Demo App 1.0.0</td><td>Test package Demo App 1.1.0</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td class="k">Template</td><td>Intel;1033</td><td>x64;1033</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">LastSavedBy</td><td>(null)</td><td>(null)</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td class="k">PackageCode</td><td>{B1111111-1111-1111-1111-111111111111}</td><td>{B2222222-2222-2222-2222-222222222222}</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">LastPrinted</td><td>(null)</td><td>(null)</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">CreateTime</td><td>(null)</td><td>(null)</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">LastSavedTime</td><td>(null)</td><td>(null)</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">SchemaVersion</td><td>200</td><td>200</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">SourceFlags</td><td>2</td><td>2</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">CharacterCount</td><td>(null)</td><td>(null)</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">CreatingApplication</td><td>msi-diff test generator</td><td>msi-diff test generator</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">Security</td><td>0</td><td>0</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td class="k">Template.Platform</td><td>Intel</td><td>x64</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">Template.Languages</td><td>1033</td><td>1033</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">SourceFlags.Decoded</td><td>Compressed</td><td>Compressed</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">Security.Decoded</td><td>No restriction</td><td>No restriction</td></tr>
+</tbody></table></div></section>
+<section class="card" id="properties">
+<h2>Property table <span class="count">5 of 9</span></h2>
+<p class="sub">ProductCode, ProductVersion, UpgradeCode and the other installer properties</p>
+<div class="tablewrap"><table class="grid">
+<thead><tr><th class="col-st">Status</th><th>Name</th><th>DemoApp-1.0.msi</th><th>DemoApp-1.1.msi</th></tr></thead><tbody>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">ALLUSERS</td><td>1</td><td>1</td></tr>
+<tr class="r-del" data-diff="1"><td class="col-st"><span class="badge b-del">removed</span></td><td class="k">LEGACYMODE</td><td>1</td><td></td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td class="k">Manufacturer</td><td>Contoso Ltd</td><td>Contoso International Ltd</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td class="k">ProductCode</td><td>{A1111111-1111-1111-1111-111111111111}</td><td>{A2222222-2222-2222-2222-222222222222}</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">ProductLanguage</td><td>1033</td><td>1033</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">ProductName</td><td>Demo App</td><td>Demo App</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td class="k">ProductVersion</td><td>1.0.0</td><td>1.1.0</td></tr>
+<tr class="r-add" data-diff="1"><td class="col-st"><span class="badge b-add">added</span></td><td class="k">REBOOT</td><td></td><td>ReallySuppress</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td class="k">UpgradeCode</td><td>{6B1F4B0E-6C8D-4E6A-9D0E-2F3C3B8A1111}</td><td>{6B1F4B0E-6C8D-4E6A-9D0E-2F3C3B8A1111}</td></tr>
+</tbody></table></div></section>
+<section class="card" id="files">
+<h2>Installed files <span class="count">+1 / &minus;1 / ~1</span></h2>
+<p class="sub">File + Component + Directory flattened into target paths. MD5 comes from the MsiFileHash table.</p>
+<details class="tbl t-chg" id="tbl-Files" data-diff="1" open>
+<summary>
+<span class="tname">Files</span>
+<span class="badge b-chg">changed</span>
+<span class="pill p-add">+1</span>
+<span class="pill p-del">&minus;1</span>
+<span class="pill p-chg">~1</span>
+<span class="tmeta">rows: 3 &rarr; 3</span>
+</summary>
+<p class="sub">Match key: <code>TargetPath</code></p>
+<div class="tablewrap"><table class="grid"><thead><tr><th class="col-st">Status</th>
+<th class="pk">TargetPath</th>
+<th>Version</th>
+<th>Size</th>
+<th>MD5</th>
+<th>Language</th>
+<th>Attributes</th>
+<th>Sequence</th>
+<th>Component</th>
+<th>ComponentId</th>
+</tr></thead><tbody>
+<tr class="r-del"><td class="col-st"><span class="badge b-del">removed</span></td><td>TARGETDIR\ProgramFilesFolder\Contoso\DemoApp\legacy.dll</td><td>1.0.0.0</td><td>33792</td><td>(null)</td><td>1033</td><td>512</td><td>3</td><td>MainExe</td><td>{11111111-1111-1111-1111-111111111111}</td></tr>
+<tr class="r-add"><td class="col-st"><span class="badge b-add">added</span></td><td>TARGETDIR\ProgramFilesFolder\Contoso\DemoApp\plugin.dll</td><td>1.1.0.0</td><td>51200</td><td>(null)</td><td>1033</td><td>512</td><td>3</td><td>Plugin</td><td>{33333333-3333-3333-3333-333333333333}</td></tr>
+<tr class="r-chg"><td class="col-st"><span class="badge b-chg">changed</span></td><td>TARGETDIR\ProgramFilesFolder\Contoso\DemoApp\app.exe</td><td class="c-chg"><span class="v-old">1.0.0.0</span><span class="v-arrow">&rarr;</span><span class="v-new">1.1.0.0</span></td><td class="c-chg"><span class="v-old">204800</span><span class="v-arrow">&rarr;</span><span class="v-new">215040</span></td><td class="c-chg"><span class="v-old">e8030000d0070000b80b0000a00f0000</span><span class="v-arrow">&rarr;</span><span class="v-new">581b0000b036000008520000606d0000</span></td><td>1033</td><td>512</td><td>1</td><td>MainExe</td><td>{11111111-1111-1111-1111-111111111111}</td></tr>
+</tbody></table></div>
+</details>
+</section>
+<section class="card" id="tables">
+<h2>MSI database tables</h2>
+<p class="sub">Row-by-row comparison using the primary key of each table.</p>
+<div class="tablewrap"><table class="grid overview"><thead><tr><th class="col-st">Status</th><th>Table</th><th class="num">+</th><th class="num">&minus;</th><th class="num">~</th><th class="num">=</th><th class="num">Rows left</th><th class="num">Rows right</th></tr></thead><tbody>
+<tr class="r-add" data-diff="1"><td class="col-st"><span class="badge b-add">added</span></td><td><a href="#tbl-LaunchCondition">LaunchCondition</a></td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">1</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td><a href="#tbl-Binary">Binary</a></td><td class="num">0</td><td class="num">0</td><td class="num">1</td><td class="num">0</td><td class="num">1</td><td class="num">1</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td><a href="#tbl-Component">Component</a></td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">2</td><td class="num">2</td><td class="num">3</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td><a href="#tbl-CustomAction">CustomAction</a></td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">1</td><td class="num">1</td><td class="num">2</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td><a href="#tbl-FeatureComponents">FeatureComponents</a></td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">2</td><td class="num">2</td><td class="num">3</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td><a href="#tbl-File">File</a></td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">3</td><td class="num">3</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td><a href="#tbl-MsiFileHash">MsiFileHash</a></td><td class="num">0</td><td class="num">0</td><td class="num">1</td><td class="num">1</td><td class="num">2</td><td class="num">2</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td><a href="#tbl-Property">Property</a></td><td class="num">1</td><td class="num">1</td><td class="num">3</td><td class="num">4</td><td class="num">8</td><td class="num">8</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td><a href="#tbl-Registry">Registry</a></td><td class="num">0</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">3</td><td class="num">2</td></tr>
+<tr class="r-chg" data-diff="1"><td class="col-st"><span class="badge b-chg">changed</span></td><td><a href="#tbl-Upgrade">Upgrade</a></td><td class="num">2</td><td class="num">2</td><td class="num">0</td><td class="num">0</td><td class="num">2</td><td class="num">2</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td><a href="#tbl-Directory">Directory</a></td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">4</td><td class="num">4</td><td class="num">4</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td><a href="#tbl-Feature">Feature</a></td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">1</td><td class="num">1</td><td class="num">1</td></tr>
+<tr class="r-same" data-diff="0"><td class="col-st"><span class="badge b-same">unchanged</span></td><td><a href="#tbl-Media">Media</a></td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">1</td><td class="num">1</td><td class="num">1</td></tr>
+</tbody></table></div>
+<details class="tbl t-add" id="tbl-LaunchCondition" data-diff="1">
+<summary>
+<span class="tname">LaunchCondition</span>
+<span class="badge b-add">added</span>
+<span class="pill p-add">+1</span>
+<span class="tmeta">rows: 0 &rarr; 1</span>
+</summary>
+<p class="sub">Match key: <code>Condition</code></p>
+<div class="tablewrap"><table class="grid"><thead><tr><th class="col-st">Status</th>
+<th class="pk">Condition</th>
+<th>Description</th>
+</tr></thead><tbody>
+<tr class="r-add"><td class="col-st"><span class="badge b-add">added</span></td><td>VersionNT &gt;= 601</td><td>Windows 7 or newer is required.</td></tr>
+</tbody></table></div>
+</details>
+<details class="tbl t-chg" id="tbl-Binary" data-diff="1">
+<summary>
+<span class="tname">Binary</span>
+<span class="badge b-chg">changed</span>
+<span class="pill p-chg">~1</span>
+<span class="tmeta">rows: 1 &rarr; 1</span>
+</summary>
+<p class="sub">Match key: <code>Name</code></p>
+<div class="tablewrap"><table class="grid"><thead><tr><th class="col-st">Status</th>
+<th class="pk">Name</th>
+<th>Data</th>
+</tr></thead><tbody>
+<tr class="r-chg"><td class="col-st"><span class="badge b-chg">changed</span></td><td>Setup</td><td class="c-chg"><span class="v-old">[stream: 25 bytes; sha256=83d4da89c4f57829]</span><span class="v-arrow">&rarr;</span><span class="v-new">[stream: 42 bytes; sha256=55713d0c484e73a4]</span></td></tr>
+</tbody></table></div>
+</details>
+<details class="tbl t-chg" id="tbl-Component" data-diff="1">
+<summary>
+<span class="tname">Component</span>
+<span class="badge b-chg">changed</span>
+<span class="pill p-add">+1</span>
+<span class="tmeta">rows: 2 &rarr; 3</span>
+</summary>
+<p class="sub">Match key: <code>Component</code></p>
+<div class="tablewrap"><table class="grid"><thead><tr><th class="col-st">Status</th>
+<th class="pk">Component</th>
+<th>ComponentId</th>
+<th>Directory_</th>
+<th>Attributes</th>
+<th>Condition</th>
+<th>KeyPath</th>
+</tr></thead><tbody>
+<tr class="r-add"><td class="col-st"><span class="badge b-add">added</span></td><td>Plugin</td><td>{33333333-3333-3333-3333-333333333333}</td><td>INSTALLDIR</td><td>0</td><td>(null)</td><td>plugin.dll</td></tr>
+</tbody></table></div>
+</details>
+<details class="tbl t-chg" id="tbl-CustomAction" data-diff="1">
+<summary>
+<span class="tname">CustomAction</span>
+<span class="badge b-chg">changed</span>
+<span class="pill p-add">+1</span>
+<span class="tmeta">rows: 1 &rarr; 2</span>
+</summary>
+<p class="sub">Match key: <code>Action</code></p>
+<div class="tablewrap"><table class="grid"><thead><tr><th class="col-st">Status</th>
+<th class="pk">Action</th>
+<th>Type</th>
+<th>Source</th>
+<th>Target</th>
+</tr></thead><tbody>
+<tr class="r-add"><td class="col-st"><span class="badge b-add">added</span></td><td>RegisterPlugin</td><td>1</td><td>Setup</td><td>RegisterPluginEntry</td></tr>
+</tbody></table></div>
+</details>
+<details class="tbl t-chg" id="tbl-FeatureComponents" data-diff="1">
+<summary>
+<span class="tname">FeatureComponents</span>
+<span class="badge b-chg">changed</span>
+<span class="pill p-add">+1</span>
+<span class="tmeta">rows: 2 &rarr; 3</span>
+</summary>
+<p class="sub">Match key: <code>Feature_, Component_</code></p>
+<div class="tablewrap"><table class="grid"><thead><tr><th class="col-st">Status</th>
+<th class="pk">Feature_</th>
+<th class="pk">Component_</th>
+</tr></thead><tbody>
+<tr class="r-add"><td class="col-st"><span class="badge b-add">added</span></td><td>Complete</td><td>Plugin</td></tr>
+</tbody></table></div>
+</details>
+<details class="tbl t-chg" id="tbl-File" data-diff="1">
+<summary>
+<span class="tname">File</span>
+<span class="badge b-chg">changed</span>
+<span class="pill p-add">+1</span>
+<span class="pill p-del">&minus;1</span>
+<span class="pill p-chg">~1</span>
+<span class="tmeta">rows: 3 &rarr; 3</span>
+</summary>
+<p class="sub">Match key: <code>File</code></p>
+<div class="tablewrap"><table class="grid"><thead><tr><th class="col-st">Status</th>
+<th class="pk">File</th>
+<th>Component_</th>
+<th>FileName</th>
+<th>FileSize</th>
+<th>Version</th>
+<th>Language</th>
+<th>Attributes</th>
+<th>Sequence</th>
+</tr></thead><tbody>
+<tr class="r-del"><td class="col-st"><span class="badge b-del">removed</span></td><td>legacy.dll</td><td>MainExe</td><td>legacy.dll</td><td>33792</td><td>1.0.0.0</td><td>1033</td><td>512</td><td>3</td></tr>
+<tr class="r-add"><td class="col-st"><span class="badge b-add">added</span></td><td>plugin.dll</td><td>Plugin</td><td>plugin.dll</td><td>51200</td><td>1.1.0.0</td><td>1033</td><td>512</td><td>3</td></tr>
+<tr class="r-chg"><td class="col-st"><span class="badge b-chg">changed</span></td><td>app.exe</td><td>MainExe</td><td>app.exe</td><td class="c-chg"><span class="v-old">204800</span><span class="v-arrow">&rarr;</span><span class="v-new">215040</span></td><td class="c-chg"><span class="v-old">1.0.0.0</span><span class="v-arrow">&rarr;</span><span class="v-new">1.1.0.0</span></td><td>1033</td><td>512</td><td>1</td></tr>
+</tbody></table></div>
+</details>
+<details class="tbl t-chg" id="tbl-MsiFileHash" data-diff="1">
+<summary>
+<span class="tname">MsiFileHash</span>
+<span class="badge b-chg">changed</span>
+<span class="pill p-chg">~1</span>
+<span class="tmeta">rows: 2 &rarr; 2</span>
+</summary>
+<p class="sub">Match key: <code>File_</code></p>
+<div class="tablewrap"><table class="grid"><thead><tr><th class="col-st">Status</th>
+<th class="pk">File_</th>
+<th>Options</th>
+<th>HashPart1</th>
+<th>HashPart2</th>
+<th>HashPart3</th>
+<th>HashPart4</th>
+</tr></thead><tbody>
+<tr class="r-chg"><td class="col-st"><span class="badge b-chg">changed</span></td><td>app.exe</td><td>0</td><td class="c-chg"><span class="v-old">1000</span><span class="v-arrow">&rarr;</span><span class="v-new">7000</span></td><td class="c-chg"><span class="v-old">2000</span><span class="v-arrow">&rarr;</span><span class="v-new">14000</span></td><td class="c-chg"><span class="v-old">3000</span><span class="v-arrow">&rarr;</span><span class="v-new">21000</span></td><td class="c-chg"><span class="v-old">4000</span><span class="v-arrow">&rarr;</span><span class="v-new">28000</span></td></tr>
+</tbody></table></div>
+</details>
+<details class="tbl t-chg" id="tbl-Property" data-diff="1">
+<summary>
+<span class="tname">Property</span>
+<span class="badge b-chg">changed</span>
+<span class="pill p-add">+1</span>
+<span class="pill p-del">&minus;1</span>
+<span class="pill p-chg">~3</span>
+<span class="tmeta">rows: 8 &rarr; 8</span>
+</summary>
+<p class="sub">Match key: <code>Property</code></p>
+<div class="tablewrap"><table class="grid"><thead><tr><th class="col-st">Status</th>
+<th class="pk">Property</th>
+<th>Value</th>
+</tr></thead><tbody>
+<tr class="r-del"><td class="col-st"><span class="badge b-del">removed</span></td><td>LEGACYMODE</td><td>1</td></tr>
+<tr class="r-add"><td class="col-st"><span class="badge b-add">added</span></td><td>REBOOT</td><td>ReallySuppress</td></tr>
+<tr class="r-chg"><td class="col-st"><span class="badge b-chg">changed</span></td><td>ProductVersion</td><td class="c-chg"><span class="v-old">1.0.0</span><span class="v-arrow">&rarr;</span><span class="v-new">1.1.0</span></td></tr>
+<tr class="r-chg"><td class="col-st"><span class="badge b-chg">changed</span></td><td>ProductCode</td><td class="c-chg"><span class="v-old">{A1111111-1111-1111-1111-111111111111}</span><span class="v-arrow">&rarr;</span><span class="v-new">{A2222222-2222-2222-2222-222222222222}</span></td></tr>
+<tr class="r-chg"><td class="col-st"><span class="badge b-chg">changed</span></td><td>Manufacturer</td><td class="c-chg"><span class="v-old">Contoso Ltd</span><span class="v-arrow">&rarr;</span><span class="v-new">Contoso International Ltd</span></td></tr>
+</tbody></table></div>
+</details>
+<details class="tbl t-chg" id="tbl-Registry" data-diff="1">
+<summary>
+<span class="tname">Registry</span>
+<span class="badge b-chg">changed</span>
+<span class="pill p-del">&minus;1</span>
+<span class="pill p-chg">~1</span>
+<span class="tmeta">rows: 3 &rarr; 2</span>
+</summary>
+<p class="sub">Match key: <code>Registry</code></p>
+<div class="tablewrap"><table class="grid"><thead><tr><th class="col-st">Status</th>
+<th class="pk">Registry</th>
+<th>Root</th>
+<th>Key</th>
+<th>Name</th>
+<th>Value</th>
+<th>Component_</th>
+</tr></thead><tbody>
+<tr class="r-del"><td class="col-st"><span class="badge b-del">removed</span></td><td>RegLegacy</td><td>2</td><td>SOFTWARE\Contoso\DemoApp</td><td>LegacyMode</td><td>1</td><td>MainExe</td></tr>
+<tr class="r-chg"><td class="col-st"><span class="badge b-chg">changed</span></td><td>RegVersion</td><td>2</td><td>SOFTWARE\Contoso\DemoApp</td><td>Version</td><td class="c-chg"><span class="v-old">1.0.0</span><span class="v-arrow">&rarr;</span><span class="v-new">1.1.0</span></td><td>MainExe</td></tr>
+</tbody></table></div>
+</details>
+<details class="tbl t-chg" id="tbl-Upgrade" data-diff="1">
+<summary>
+<span class="tname">Upgrade</span>
+<span class="badge b-chg">changed</span>
+<span class="pill p-add">+2</span>
+<span class="pill p-del">&minus;2</span>
+<span class="tmeta">rows: 2 &rarr; 2</span>
+</summary>
+<p class="sub">Match key: <code>UpgradeCode, VersionMin, VersionMax, Language, Attributes</code></p>
+<div class="tablewrap"><table class="grid"><thead><tr><th class="col-st">Status</th>
+<th class="pk">UpgradeCode</th>
+<th class="pk">VersionMin</th>
+<th class="pk">VersionMax</th>
+<th class="pk">Language</th>
+<th class="pk">Attributes</th>
+<th>Remove</th>
+<th>ActionProperty</th>
+</tr></thead><tbody>
+<tr class="r-del"><td class="col-st"><span class="badge b-del">removed</span></td><td>{6B1F4B0E-6C8D-4E6A-9D0E-2F3C3B8A1111}</td><td>(null)</td><td>1.0.0</td><td>(null)</td><td>256</td><td>(null)</td><td>WIX_UPGRADE_DETECTED</td></tr>
+<tr class="r-del"><td class="col-st"><span class="badge b-del">removed</span></td><td>{6B1F4B0E-6C8D-4E6A-9D0E-2F3C3B8A1111}</td><td>1.0.0</td><td>(null)</td><td>(null)</td><td>2</td><td>(null)</td><td>WIX_DOWNGRADE_DETECTED</td></tr>
+<tr class="r-add"><td class="col-st"><span class="badge b-add">added</span></td><td>{6B1F4B0E-6C8D-4E6A-9D0E-2F3C3B8A1111}</td><td>(null)</td><td>1.1.0</td><td>(null)</td><td>256</td><td>(null)</td><td>WIX_UPGRADE_DETECTED</td></tr>
+<tr class="r-add"><td class="col-st"><span class="badge b-add">added</span></td><td>{6B1F4B0E-6C8D-4E6A-9D0E-2F3C3B8A1111}</td><td>1.1.0</td><td>(null)</td><td>(null)</td><td>2</td><td>(null)</td><td>WIX_DOWNGRADE_DETECTED</td></tr>
+</tbody></table></div>
+</details>
+</section>
+</main>
+<script>
+(function () {
+  var q = document.getElementById('q');
+  var onlyDiff = document.getElementById('onlyDiff');
+
+  function apply() {
+    var needle = q.value.trim().toLowerCase();
+    var diffOnly = onlyDiff.checked;
+
+    document.querySelectorAll('tbody tr').forEach(function (tr) {
+      var hideByDiff = diffOnly && tr.dataset.diff === '0';
+      var hideByText = needle && tr.textContent.toLowerCase().indexOf(needle) === -1;
+      tr.classList.toggle('hidden', hideByDiff || hideByText);
+    });
+
+    document.querySelectorAll('details.tbl').forEach(function (d) {
+      var hideByDiff = diffOnly && d.dataset.diff === '0';
+      var hideByText = false;
+      if (needle) {
+        var visibleRows = d.querySelectorAll('tbody tr:not(.hidden)').length;
+        hideByText = visibleRows === 0 && d.querySelector('.tname').textContent.toLowerCase().indexOf(needle) === -1;
+      }
+      d.classList.toggle('hidden', hideByDiff || hideByText);
+    });
+  }
+
+  q.addEventListener('input', apply);
+  onlyDiff.addEventListener('change', apply);
+
+  document.querySelectorAll('.toolbar button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var open = b.dataset.act === 'expand';
+      document.querySelectorAll('details.tbl').forEach(function (d) { d.open = open; });
+    });
+  });
+
+  document.querySelectorAll('a[href^="#tbl-"]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      var target = document.getElementById(a.getAttribute('href').slice(1));
+      if (target) { target.open = true; target.classList.remove('hidden'); }
+    });
+  });
+
+  apply();
+})();
+</script></body></html>
